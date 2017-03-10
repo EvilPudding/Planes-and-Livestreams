@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+	<head>
+        <meta charset="utf-8" />
+		<title>Index</title>
+		<link rel="stylesheet" href="http://openlayers.org/en/v4.0.1/css/ol.css" type="text/css">
+		<script src="http://openlayers.org/en/v4.0.1/build/ol.js"></script>
+		<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+		<script src='https://threejs.org/build/three.min.js'></script>
+		<script src='script.js'></script>
+		<style>
+body
+{
+	margin: 0;
+	padding: 0;
+}
+#container
+{
+	position: relative;
+}
+#overlay
+{
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 889px;
+	height: 500px;
+	pointer-events: none;
+}
+#button
+{
+	position: absolute;
+	top: 10px;
+	left: 10px;
+	width: 30px;
+	height: 30px;
+	background-color: rgba(30, 30, 30, 0.6);
+	cursor: pointer;
+}
+#button:hover
+{
+	background-color: rgba(30, 30, 30, 0.9);
+}
+#drag_box
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 889px;
+	height: 420px;
+	pointer-events: none;
+	cursor: auto;
+}
+#drag_box.fs
+{
+	cursor: crosshair;
+	pointer-events: all;
+}
+#left
+{
+	float: left;
+	display: inline-block;
+	width: 889px;
+}
+#map
+{
+	width: 889px;
+	height: 500px;
+}
+#controls
+{
+	display: inline-block;
+	float: left;
+}
+		</style>
+	</head>
+	<body>
+		<div id="left">
+			<div id="container">
+				<div id="stream">
+					<iframe id="embed"
+						src="https://livestream.com/accounts/23093026/events/6897778/player"
+						width="889" height="500" frameborder="0" scrolling="no" allowfullscreen> </iframe>
+				</div>
+				<div id="overlay"> </div>
+				<div id="drag_box"> </div>
+				<div id="button"> </div>
+			</div>
+			<div id="map">
+
+			</div>
+		</div>
+		<div id="controls">
+			<p><input type="range"/ min="10" max="120" step="0.1"
+				   value="70" oninput="fov_change(this.value)">
+			<span id="fov">FOV: 70</span><p>
+			<p><input type="range"/ min="-90" max="90" step="0.1"
+				   value="30" oninput="vert_change(this.value)">
+			<span id="angy">Vertical Angle: 30</span><p>
+		</div>
+	</body>
+</html>
