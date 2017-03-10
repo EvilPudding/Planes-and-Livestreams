@@ -208,6 +208,7 @@ window.onload = function() {
 			angy += (mouseY - event.clientY) / 100;
 			mouseX = event.clientX;
 			mouseY = event.clientY;
+			update_camera();
 		}
 	}, true);
 	button.addEventListener("click", function(event) {
