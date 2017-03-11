@@ -38,7 +38,7 @@ function animate() {
 		p.y + Math.sin(angx) * Math.cos(angy),
 		p.z + Math.sin(angy)));
 
-	var sun_dist = 100000 / scale;
+	var sun_dist = 1000000 / scale;
 	var sun_pos = SunCalc.getSunPosition(current_time, camera.lat, camera.lon);
 	sun_pos.azimuth += Math.PI;
 	sun.position.x = sun_dist * Math.cos(sun_pos.azimuth) * Math.cos(sun_pos.altitude);
@@ -68,7 +68,7 @@ function init() {
     // camera.rotation.y = - Math.PI / 2;
 
 
-	var sun_geometry = new THREE.SphereGeometry( 10000 / scale, 12, 12);
+	var sun_geometry = new THREE.SphereGeometry( 50000 / scale, 12, 12);
 	sun = new THREE.Mesh( sun_geometry,
 		new THREE.MeshBasicMaterial( {
 			color: 0xFFFF00
