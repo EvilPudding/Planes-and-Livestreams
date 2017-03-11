@@ -9,6 +9,7 @@ var camera_height = 10;
 var scene, camera, renderer;
 var geometry;
 var sphere;
+var sun;
 
 var angx = Math.PI / 2;
 // var angy = -Math.PI / 2;
@@ -18,7 +19,12 @@ var scale = 1000;
 var earth_radius = 6378137;
 var earth;
 
+var elapsed = 0;
+var last_time = new Date();
 function animate() {
+	current_time = new Date();
+	elapsed += (current_time - last_time) / 10000;
+	last_time = current_time;
 
     requestAnimationFrame( animate );
 	var p = camera.position;
@@ -26,13 +32,27 @@ function animate() {
 	// angx += 0.001;
 	// update_camera();
 
-	sphere.rotation.y += 0.005;
+	sphere.rotation.y = current_time / (24 * 60 * 60 * 1000);
 	camera.up = new THREE.Vector3(0,0,1);
 	camera.lookAt(new THREE.Vector3(p.x + Math.cos(angx) * Math.cos(angy),
 		p.y + Math.sin(angx) * Math.cos(angy),
 		p.z + Math.sin(angy)));
 
-	// if(earth) earth.rotation.y += 0.001;
+	var sun_dist = 100000 / scale;
+	var sun_pos = SunCalc.getSunPosition(current_time, camera.lat, camera.lon);
+	sun_pos.azimuth += Math.PI;
+	sun.position.x = sun_dist * Math.cos(sun_pos.azimuth) * Math.cos(sun_pos.altitude);
+	sun.position.y = sun_dist * Math.sin(sun_pos.azimuth) * Math.cos(sun_pos.altitude);
+	sun.position.z = sun_dist * Math.sin(sun_pos.altitude);
+
+	for(var p in planes)
+	{
+		var pl = planes[p];
+
+		pl.graph.position.x = pl.start_pos.x + pl.vel_x * elapsed;
+		pl.graph.position.y = pl.start_pos.y + pl.vel_y * elapsed;
+		pl.graph.position.z = pl.start_pos.z + pl.vel_z * elapsed;
+	}
 
     renderer.render( scene, camera );
 }
@@ -47,23 +67,48 @@ function init() {
 	camera.position.z = camera_height / scale;
     // camera.rotation.y = - Math.PI / 2;
 
-	sphere = new THREE.Mesh( new THREE.SphereGeometry( earth_radius / scale * 1000, 16, 8 ),
+
+	var sun_geometry = new THREE.SphereGeometry( 10000 / scale, 12, 12);
+	sun = new THREE.Mesh( sun_geometry,
+		new THREE.MeshBasicMaterial( {
+			color: 0xFFFF00
+	}));
+
+	var sphere_geometry = new THREE.SphereGeometry( earth_radius / scale * 10000, 18, 18);
+	sphere = new THREE.Mesh( sphere_geometry,
 		new THREE.MeshBasicMaterial( {
 		color: 0x0000ff, wireframe: true
 	}));
+
+	// var loader = new THREE.TextureLoader();
+	// loader.load( '/const.jpg', function ( texture ) {
+	// 	scene.remove(sphere);
+
+	// 	var material = new THREE.MeshBasicMaterial( { map: texture, overdraw: 0.5,
+	// 		transparent: true
+	// 	} );
+
+
+	// 	sphere = new THREE.Mesh( sphere_geometry, material );
+	// 	sphere.rotation.x += Math.PI / 2;
+
+	// 	mesh.scale.set( - 1, 1, 1 );
+	// 	scene.add( sphere );
+
+	// } );
 	sphere.rotation.x += Math.PI / 2;
 	scene.add(sphere);
 
-	var earth_geometry = new THREE.SphereGeometry( earth_radius / scale, 16, 32);
+	// var earth_geometry = new THREE.SphereGeometry( earth_radius / scale, 16, 32);
 
-	earth = new THREE.Mesh( earth_geometry, new THREE.MeshPhongMaterial( {
-		color: 0x009900, polygonOffset: true,
-		polygonOffsetFactor: 10, polygonOffsetUnits: 1
-	} ) );
+	// earth = new THREE.Mesh( earth_geometry, new THREE.MeshPhongMaterial( {
+	// 	color: 0x009900, polygonOffset: true,
+	// 	polygonOffsetFactor: 10, polygonOffsetUnits: 1
+	// } ) );
 	// scene.add(earth);
-	var wireframe = new THREE.LineSegments( new THREE.EdgesGeometry(earth_geometry),
-		new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 2 } ) );
-	earth.add(wireframe);
+	// var wireframe = new THREE.LineSegments( new THREE.EdgesGeometry(earth_geometry),
+		// new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 2 } ) );
+	// earth.add(wireframe);
 
     // mesh = new THREE.Mesh(new THREE.CubeGeometry( 10 / scale, 10 / scale, 10 / scale),
     mesh = new THREE.Mesh(new THREE.PlaneGeometry( 10000 / scale, 10000 / scale, 1, 1),
@@ -74,10 +119,12 @@ function init() {
 	} ));
 
     scene.add( mesh );
+	mesh.add(sun);
 	mesh.add(camera);
 
-	renderer = new THREE.WebGLRenderer( { alpha: true } );
+	renderer = new THREE.WebGLRenderer( {clearAlpha: 1, alpha: true } );
 
+	renderer.setClearColor( 0x000000, 0);
     renderer.setSize(width, height);
 
     document.getElementById('overlay').appendChild( renderer.domElement );
@@ -193,7 +240,7 @@ window.onload = function() {
 
 	camera_set_pos(center[0], center[1], camera_height);
 
-	setInterval(loop, 5000);
+	setInterval(loop, 10000);
 	var mouseX = 0;
 	var mouseY = 0;
 	var mouseDown = false;
@@ -323,6 +370,8 @@ function req()
 		url: url,
 		dataType: 'json',
 		success: function(data) {
+			last_time = new Date();
+			elapsed = 0;
 			setTimeout(function(){lock = false}, 500);
 			for(var i in data)
 			{
@@ -331,16 +380,16 @@ function req()
 				var cached = planes[id];
 				if(cached)
 				{
-					var feature = cached.feature;
-					feature.getGeometry().translate(cached[5] - pl[5], cached[6] - pl[6]);
+					cached.feature.getGeometry().translate(cached[5] - pl[5], cached[6] - pl[6]);
 
-					var old_pos = cached.graph.position.clone();
 					pos_from_coords(cached.graph, pl[5], pl[6], pl[7]);
+					var old_pos = cached.start_pos;
+					cached.start_pos = cached.graph.position.clone();
 
 					var geom = new THREE.Geometry();
-					geom.vertices.push(old_pos, cached.graph.position.clone());
+					geom.vertices.push(old_pos, cached.start_pos);
 					var line = new THREE.Line( geom, new THREE.LineBasicMaterial({
-						color: 0xFFFF00
+						color: 0xFF9900
 					}) );
 					scene.add(line);
 					cached.lines.push(line);
@@ -348,6 +397,9 @@ function req()
 					{
 						scene.remove(cached.lines.shift());
 					}
+					cached.vel_x = cached.start_pos.x - old_pos.x;
+					cached.vel_y = cached.start_pos.y - old_pos.y;
+					cached.vel_z = cached.start_pos.z - old_pos.z;
 
 					cached[5] = pl[5];
 					cached[6] = pl[6];
@@ -375,8 +427,13 @@ function req()
 						} );
 						pl.graph = new THREE.Points( dotGeometry, dotMaterial );
 						pos_from_coords(pl.graph, pl[5], pl[6], pl[7]);
-						scene.add( pl.graph );
+						pl.start_pos = pl.graph.position.clone();
 
+						pl.vel_x = 0;
+						pl.vel_y = 0;
+						pl.vel_z = 0;
+
+						scene.add( pl.graph );
 						pl.lines = [];
 					}
 				}

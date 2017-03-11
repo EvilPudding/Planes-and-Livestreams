@@ -29,7 +29,7 @@ function update_db()
 
 }
 
-setInterval(update_db, 5000);
+setInterval(update_db, 10000);
 update_db();
 http.createServer(function (req, response) {
 
